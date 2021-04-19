@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Stock;
 use App\Models\StockCategory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
-class StockController extends Controller
+class StockCreate extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -16,10 +15,12 @@ class StockController extends Controller
      */
     public function index()
     {
-        $stocks = Stock::all();
-        return Inertia::render('Stocks/St',
-        ['stocks'=>$stocks]);
-        
+        //
+
+        $stock_categories = StockCategory::all();
+
+        return Inertia::render('Stocks/Creates',
+            ['stock_categories' => $stock_categories]);
     }
 
     /**
@@ -29,11 +30,9 @@ class StockController extends Controller
      */
     public function create()
     {
-        // return Inertia::render('Stocks/Creates');
-        $stock_categories = StockCategory::all();
+        //
 
-        return Inertia::render('Stocks/Creates',
-            ['stock_categories' => $stock_categories]);
+        return Inertia::render('StockCategories/Create');
     }
 
     /**
@@ -44,32 +43,7 @@ class StockController extends Controller
      */
     public function store(Request $request)
     {
-        $validate = $request->validate(
-
-            [
-                'id' => 'required|numeric|unique:stocks',
-                'stock_category_id' => 'required|numeric|unique:stocks',
-                'description' => 'required',
-                'uom' => 'required',
-                'barcode' => 'required|numeric',
-                'discontinued' => 'required',
-
-            ]
-
-        );
-
-        $model = new Stock();
-        $model->id = $request->id;
-        $model->stock_category_id = $request->stock_category_id;
-        $model->description = $request->description;
-        $model->uom = $request->uom;
-        $model->barcode = $request->barcode;
-        $model->discontinued= $request->discontinued;
-
-        $model->save();
-
-        return redirect()->back()->with('success', 'New Stocks Added!');
-
+        //
     }
 
     /**

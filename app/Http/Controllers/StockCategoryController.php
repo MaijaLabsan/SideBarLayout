@@ -6,7 +6,6 @@ use App\Models\StockCategory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
-
 class StockCategoryController extends Controller
 {
     /**
@@ -16,9 +15,16 @@ class StockCategoryController extends Controller
      */
     public function index()
     {
-        $stock_categories = StockCategory::all();
+        // $stock_categories = StockCategory::all();
+
+        // return Inertia::render('StockCategories/Index',
+        //     ['stock_categories' => $stock_categories]);
+            
+     $stock_categories = StockCategory::all();
+
         return Inertia::render('StockCategories/Index',
-        ['stock_categories'=>$stock_categories]);
+            ['stock_categories' => $stock_categories]);
+            
     }
 
     /**
@@ -28,7 +34,7 @@ class StockCategoryController extends Controller
      */
     public function create()
     {
-       return Inertia::render('StockCategories/Create');
+        return Inertia::render('StockCategories/Create');
     }
 
     /**
@@ -39,7 +45,29 @@ class StockCategoryController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validate = $request->validate(
+
+            [
+                'id' => 'required|numeric|unique:stock_categories',
+        
+                'description' => 'required',
+                'type' => 'required',
+                'stock_account' => 'nullable',
+
+            ]
+
+        );
+
+        $model = new StockCategory();
+        $model->id = $request->id;
+        $model->description = $request->description;
+        $model->type = $request->type;
+        $model->stock_account = $request->stock_account;
+
+        $model->save();
+
+        return redirect()->back()->with('success', 'New Stock Category Added!');
+
     }
 
     /**
