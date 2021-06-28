@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Stock;
-use App\Models\StockCategory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\StockCategory;
+use App\Models\Uom;
+use App\Models\Stock;
+use Illuminate\Support\Facades\Redirect;
 
 class StockController extends Controller
 {
@@ -16,10 +18,11 @@ class StockController extends Controller
      */
     public function index()
     {
-        $stocks = Stock::all();
-        return Inertia::render('Stocks/St',
-        ['stocks'=>$stocks]);
-        
+        //retrieve all records
+        $stocks = Stock::with(['stock_category', 'uom'])->latest()->get();
+
+        //then display using the Index view
+        return Inertia::render('Stocks/Index', compact('stocks'));
     }
 
     /**
@@ -29,11 +32,10 @@ class StockController extends Controller
      */
     public function create()
     {
-        // return Inertia::render('Stocks/Creates');
-        $stock_categories = StockCategory::all();
-
-        return Inertia::render('Stocks/Creates',
-            ['stock_categories' => $stock_categories]);
+        return Inertia::render('Stocks/Create', [
+            'categories'=>StockCategory::get(),
+            'uoms'=>Uom::get(),
+        ]);
     }
 
     /**
@@ -43,33 +45,25 @@ class StockController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
-    {
-        $validate = $request->validate(
+    {   
+        $validatedData = $request->validate(
 
             [
-                'id' => 'required|numeric|unique:stocks',
-                'stock_category_id' => 'required|numeric|unique:stocks',
+                'stock_category_id' => 'exists:stock_categories,id',
                 'description' => 'required',
-                'uom' => 'required',
-                'barcode' => 'required|numeric',
-                'discontinued' => 'required',
-
+                'uom' => 'exists:uoms,id',
+                'barcode' => 'string',
+                'discontinued' => 'required|boolean',
             ]
 
         );
 
-        $model = new Stock();
-        $model->id = $request->id;
-        $model->stock_category_id = $request->stock_category_id;
-        $model->description = $request->description;
-        $model->uom = $request->uom;
-        $model->barcode = $request->barcode;
-        $model->discontinued= $request->discontinued;
+        Stock::create(array_merge($validatedData, [
+            'id' => uniqid(),
+            'discontinued' => request()->boolean('discontinued') ? 'Y' : 'N'],
+        ));
 
-        $model->save();
-
-        return redirect()->back()->with('success', 'New Stocks Added!');
-
+        return redirect()->back()->with('success', 'New Stock Added!');
     }
 
     /**
@@ -80,7 +74,12 @@ class StockController extends Controller
      */
     public function show($id)
     {
-        //
+        $model = Stock::find($id);
+        
+        $categories = StockCategory::get();
+        $uoms = Uom::get();
+
+        return Inertia::render('Stocks/View', compact('model', 'categories', 'uoms'));
     }
 
     /**
@@ -103,7 +102,23 @@ class StockController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $validatedData = $request->validate(
+
+            [
+                'stock_category_id' => 'exists:stock_categories,id',
+                'description' => 'required',
+                'uom' => 'exists:uoms,id',
+                'barcode' => 'string',
+                'discontinued' => 'required|boolean',
+            ]
+
+        );
+
+        Stock::findOrFail($id)->update(array_merge($validatedData, [
+            'discontinued' => request()->boolean('discontinued') ? 'Y' : 'N'
+        ]));
+
+        return Redirect::route('stock.index')->with("Success", "Stock Updated");
     }
 
     /**
@@ -114,6 +129,8 @@ class StockController extends Controller
      */
     public function destroy($id)
     {
-        //
+        Stock::findOrFail($id)->delete();
+
+        return Redirect::route('stock.index')->with('success', 'Stock Category deleted.');
     }
 }
